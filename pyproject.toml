@@ -1,0 +1,54 @@
+[project]
+name = "ONCToolbox"
+version = "0.0.1"
+description = "A more Pythonic wrapper for accessing ONC data via Oceans 3.0."
+authors = [
+    {name = "Ian Black", email = "iantimothyblack@gmail.com"},
+]
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ['ONC']
+readme = "README.md"
+dependencies = [
+    "bottleneck",
+    "gsw",
+    "jupyter",
+    "matplotlib",
+    "netCDF4",
+    "numpy",
+    "onc",
+    "pandas",
+    "pygeomag",
+    "pytest",
+    "requests",
+    "scipy",
+    "uv",
+    "xarray",
+]
+
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+
+
+
+
+[project.urls]
+Repository = 'https://github.com/IanTBlack/onc-toolbox'
+Issues = 'https://github.com/IanTBlack/onc-toolbox/issues'
+Discussions = 'https://github.com/IanTBlack/onc-toolbox/discussions'
+
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+
+[tool.setuptools.packages.find]
+exclude = ["dev*","examples*",".github", "_sphinx",]

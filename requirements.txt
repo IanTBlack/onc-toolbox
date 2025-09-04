@@ -1,0 +1,15 @@
+bottleneck
+cartopy
+gsw
+jupyter
+matplotlib
+netCDF4
+numpy
+onc
+pandas
+pygeomag
+pytest
+requests
+scipy
+uv
+xarray
