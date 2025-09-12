@@ -73,11 +73,13 @@ class ONCToolbox(ONC):
     def __init__(self, token: str = get_onc_token_from_netrc(),
                  show_info: bool = False,
                  show_warning: bool = False,
-                 timeout: int = 60) -> None:
+                 timeout: int = 60,
+                 save_dir = 'onc_data') -> None:
         super().__init__(token=token,
                          showInfo=show_info,
                          showWarning=show_warning,
-                         timeout=timeout)
+                         timeout=timeout,
+                         outPath = save_dir)
 
     def get_fullres_data(self, location_code: str | None,
                          device_category_code: str | None = None,
