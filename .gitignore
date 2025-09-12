@@ -162,5 +162,4 @@ cython_debug/
 # Custom
 uv.lock
 scratch.ipynb
-examples/bacvp/suna/onc_data
-examples/hf_radar/onc_data
+examples/*/onc_data
