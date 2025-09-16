@@ -1,6 +1,6 @@
 [project]
 name = "onc-toolbox"
-version = "0.0.2"
+version = "0.0.3"
 description = "A toolbox for exploring Ocean Networks Canada data for the adventuring scientist."
 authors = [
     {name = "Ian Black", email = "iantimothyblack@gmail.com"},
@@ -41,3 +41,8 @@ classifiers = [
 
 [project.urls]
 Repository = 'https://github.com/IanTBlack/onc-toolbox'
+
+
+
+[tool.setuptools.packages.find]
+exclude = ["examples*",".github"]
