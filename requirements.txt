@@ -1,5 +1,6 @@
 bottleneck
 cartopy
+echopype
 gsw
 ipykernel
 ipympl
@@ -8,6 +9,7 @@ matplotlib
 netCDF4
 numpy
 onc
+opencv-python
 pandas
 pytest
 requests
