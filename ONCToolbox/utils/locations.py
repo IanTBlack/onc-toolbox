@@ -1,6 +1,6 @@
 
 
-
+# British Columbia Ferry Terminal Locations
 class BCFTerminal:
     class Tsawwassen:
         lat: float = 49.006621
@@ -41,3 +41,34 @@ class BCFTerminal:
     class HorseshoeBay:
         lat: float = 49.375791
         lon: float = -123.271643
+
+
+# HF Radar Locations
+class HFSites:
+    class VION:
+        lat = 49.2158667
+        lon = -123.2053833
+
+    class VCOL:
+        lat = 49.01805
+        lon = -123.1718833
+
+    class VGPT:
+        lat = 48.87365
+        lon = -123.291
+
+    class VATK:
+        lat = 49.3300667
+        lon = -123.2644333
+
+    class VDIG:
+        lat = 54.2625333
+        lon = -130.4254500
+
+    class VRID:
+        lat = 54.2346333
+        lon = -130.3346833
+
+    class VPT:
+        lat = 49.2055333
+        lon = -123.2633000
