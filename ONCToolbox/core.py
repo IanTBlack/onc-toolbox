@@ -136,7 +136,6 @@ class ONCToolbox(ONC):
         elif sensor_category_codes is None:
             scc = None
 
-        # Form the request parameters.
         params = {'locationCode': location_code,
                   'deviceCategoryCode': device_category_code,
                   'deviceCode': device_code,
@@ -280,7 +279,6 @@ class ONCToolbox(ONC):
         vdf['time'] = vdf['time'].astype('datetime64[ms]')
         vdf.index = vdf['time']
         vdf = vdf.drop(columns=['time'])
-
         var_metadata = {k: v for k, v in var_data.items() if
                         k not in ['actualSamples', 'data', 'outputFormat']}
         return (vdf, var_metadata)
@@ -373,6 +371,20 @@ class ONCToolbox(ONC):
                               device_category_name: str = None,
                               description: str = None,
                               property_code: str = None):
+        """
+        Return a pandas DataFrame of device categories for the given input criteria.
+        Useful for exploring what device categories may be available for a given
+        location code.
+
+        :param location_code:
+        :param device_category_code:
+        :param device_category_name:
+        :param description:
+        :param property_code:
+        :return:
+        """
+
+
         params = {'locationCode': location_code,
                   'deviceCategoryCode': device_category_code,
                   'deviceCategoryName': device_category_name,
@@ -516,6 +528,35 @@ class ONCToolbox(ONC):
             filepaths.append(fp)
         return filepaths
 
+    def request_and_download_data_product(self, location_code: str | None,
+                                          device_category_code: str | None,
+                                          extension: str | None,
+                                          data_product_code: str | None,
+                                          date_from: None | datetime = None,
+                                          date_to: None | datetime = None,
+                                          device_code: str | None = None,
+                                          property_code: str | None = None,
+                                          dpo_options: dict | None = None,
+                                          overwrite: bool = True):
+        params = {'locationCode': location_code,
+                  'deviceCategoryCode': device_category_code,
+                  'dataProductCode': data_product_code,
+                  'extension': extension,
+                  'dateFrom': format_datetime(date_from),
+                  'dateTo': format_datetime(date_to),
+                  'deviceCode': device_code,
+                  'propertyCode': property_code}
+        params = params | (dpo_options if dpo_options is not None else {})
+        params = {k: v for k, v in params.items() if v is not None}
+
+        req = self.requestDataProduct(filters=params)
+        req_id = req['dpRequestId']
+        status = self.checkDataProduct(req_id)
+        run = self.runDataProduct(req_id)
+        download = self.downloadDataProduct(run['runIds'][0], overwrite=overwrite)
+        return download
+
+## Untested
     def find_archive_file_urls(self, location_code: str, device_category_code: str,
                            date_from: None | datetime = None,
                            date_to: None | datetime = None) -> list[str]:
