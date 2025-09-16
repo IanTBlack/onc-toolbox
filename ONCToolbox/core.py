@@ -1,6 +1,7 @@
 from datetime import datetime
 import numpy as np
 from onc import ONC
+import os
 import pandas as pd
 import xarray as xr
 
@@ -463,7 +464,58 @@ class ONCToolbox(ONC):
         return df
 
 
+
+
+
+
+
 # ARCHIVE FILES---------------------------------------------------
+    def find_archive_files(self, location_code: str | None = None,
+                           device_category_code: str | None = None,
+                           date_from: None | datetime = None,
+                           date_to: None | datetime = None,
+                           date_archived_from: None | datetime = None,
+                           date_archived_to: None | datetime = None,
+                           extension: str = None,
+                           return_options: str = 'all',
+                           row_limit: int = 100000,
+                           device_code: str | None = None) -> list[str]:
+
+        params = {'locationCode': location_code,
+                  'deviceCategoryCode': device_category_code,
+                  'deviceCode': device_code,
+                  'dateFrom': format_datetime(date_from),
+                  'dateTo': format_datetime(date_to),
+                  'dateArchivedFrom': format_datetime(date_archived_from),
+                  'dateArchivedTo': format_datetime(date_archived_to),
+                  'fileExtension': extension,
+                  'rowLimit': row_limit,
+                  'returnOptions': return_options}
+        params = {k: v for k, v in params.items() if v is not None}
+
+        json_response = self.getArchivefile(filters=params, allPages=True)
+
+        file_data = json_response['files']
+
+        df = pd.json_normalize(file_data)
+
+        return df
+
+    def download_archive_file(self, filename: str, overwrite:bool = False):
+        save_filepath = os.path.join(self.outPath, filename)
+        if overwrite is False and os.path.isfile(save_filepath):
+            return save_filepath
+        else:
+            self.downloadArchivefile(filename)
+            return save_filepath
+
+    def download_archive_files(self, filenames: list[str], overwrite:bool = False) -> list[str]:
+        filepaths = []
+        for filename in filenames:
+            fp = self.download_archive_file(filename, overwrite=overwrite)
+            filepaths.append(fp)
+        return filepaths
+
     def find_archive_file_urls(self, location_code: str, device_category_code: str,
                            date_from: None | datetime = None,
                            date_to: None | datetime = None) -> list[str]:
