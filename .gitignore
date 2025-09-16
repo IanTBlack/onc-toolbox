@@ -166,6 +166,7 @@ examples/**/onc_data/
 
 
 #Temp
-examples/bc_ferries/scratch/
-examples/bacvp/hocr/
-examples/bc_ferries/downloaders/
+review/scratch/
+review/hocr/
+review/downloaders/
+review/
