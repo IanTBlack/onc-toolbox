@@ -13,7 +13,7 @@ def format_datetime(dt: datetime | None | str) -> str:
     """
     Format an incoming datetime representation to a format that is compatible
         with the ONC REST API. If None is provided, then the API will default
-        to using the tail end of the data available.
+        to using the tail end of the available data.
 
     :param dt: A datetime object, string representation of a date, or None.
     :return: A string in the format of 'YYYY-mm-ddTHH:MM:SS.fffZ'.
@@ -37,14 +37,14 @@ def nan_onc_flags(data: pd.DataFrame | xr.Dataset,
     """
 
     if isinstance(data, pd.DataFrame):
-        vars = data.columns
+        dvars = data.columns
     elif isinstance(data, xr.Dataset):
-        vars = data.data_vars
-    flag_vars = [v for v in vars if v.startswith(f"{FlagTerm}_")]
+        dvars = data.data_vars
+    flag_vars = [v for v in dvars if v.startswith(f"{FlagTerm}_")]
     if len(flag_vars) != 0:
         for fv in flag_vars:
             dv = fv.replace(f"{FlagTerm}_", '')
-            if dv in vars:
+            if dv in dvars:
                 data[dv] = data[dv].where(~data[fv].isin([flags_to_nan]), np.nan)
     return data
 
@@ -58,10 +58,10 @@ def remove_onc_flags(data: pd.DataFrame | xr.Dataset) -> pd.DataFrame | xr.Datas
     """
 
     if isinstance(data, pd.DataFrame):
-        vars = data.columns
+        dvars = data.columns
     elif isinstance(data, xr.Dataset):
-        vars = data.data_vars
-    flag_vars = [v for v in vars if v.startswith(f"{FlagTerm}_")]
+        dvars = data.data_vars
+    flag_vars = [v for v in dvars if v.startswith(f"{FlagTerm}_")]
     if len(flag_vars) != 0:
         if isinstance(data, pd.DataFrame):
             data = data.drop(columns = flag_vars, errors = 'ignore')
@@ -91,26 +91,6 @@ class ONCToolbox(ONC):
                          date_to: datetime | None = None,
                          out_as: str = 'json',
                          add_metadata: bool = False):
-        """
-        Use the ONC api-python-client to obtain full-resolution data for the
-            given conditions. If an input is left as None, the default value that
-            Oceans 3.0 uses will be applied.
-
-        :param location_code:
-        :param device_category_code:
-        :param property_code:
-        :param sensor_category_codes:
-        :param device_code:
-        :param date_from:
-        :param date_to:
-        :param out_as: If 'json', return the raw JSON response from the API.
-            If 'pandas', return a pandas DataFrame. If 'xarray', return an
-            xarray Dataset.
-        :param add_metadata: If True, make additional requests to add metadata to
-            a pandas DataFrame or xarray Dataset. Only applicable if out_as is 'pandas'
-            or 'xarray'.
-        :return:
-        """
 
         ## Input Checks
         if (location_code is None
@@ -163,6 +143,74 @@ class ONCToolbox(ONC):
             if add_metadata is True:
                 data = self.add_metadata(data)
             return data
+
+    def get_clean_data(self, location_code: str | None,
+                       device_category_code: str | None = None,
+                        property_code: str | list[str] | None = None,
+                        sensor_category_codes: str | list[str] | None = None,
+                        device_code: str | None = None,
+                        date_from: datetime | None = None,
+                       resample_type: str | None = None,
+                       resample_period: int | None = None,
+                        date_to: datetime | None = None,
+                       out_as: str = 'json',
+                       add_metadata: bool = True) -> xr.Dataset:
+
+        ## Input Checks
+        if (location_code is None
+                and device_category_code is None
+                and device_code is None):
+            raise ValueError("Either both a location_code and a device_category_code "
+                             "or just a device_code must be provided.")
+
+        if out_as not in ['json', 'pandas', 'xarray']:
+            raise ValueError("out_as must be 'json', 'pandas', or 'xarray'")
+
+        if isinstance(property_code, str):
+            pcs = property_code
+        elif isinstance(property_code, list):
+            pcs = ','.join(property_code)
+        elif property_code is None:
+            pcs = None
+
+        if isinstance(sensor_category_codes, str):
+            scc = sensor_category_codes
+        elif isinstance(sensor_category_codes, list):
+            scc = ','.join(sensor_category_codes)
+        elif sensor_category_codes is None:
+            scc = None
+
+        params = {'locationCode': location_code,
+                  'deviceCategoryCode': device_category_code,
+                  'deviceCode': device_code,
+                  'propertyCode': pcs,
+                  'sensorCategoryCodes': scc,
+                  'dateFrom': format_datetime(date_from),
+                  'dateTo': format_datetime(date_to),
+                  'rowLimit': 100000,
+                  'outputFormat': 'Array',
+                  'qualityControl': 'clean',
+                  'resampleType': resample_type,
+                  'resamplePeriod': resample_period,
+                  'fillGaps': False,
+                  'metadata': 'Full',
+                  'byDeployment': False}
+        params = {k: v for k, v in params.items() if v is not None}
+
+        json_data = self.getScalardata(filters=params, allPages=True)
+
+        # Sometimes the sensorData section of a json response is empty.
+        if json_data is None:
+            return None
+        if out_as == 'json':
+            return json_data
+        else:
+            data = self.convert_json(json_data, out_as = out_as)
+            if add_metadata is True:
+                data = self.add_metadata(data)
+            return data
+
+
 
     def add_metadata(self, data: xr.Dataset | pd.DataFrame):
         """
@@ -262,6 +310,7 @@ class ONCToolbox(ONC):
     def json_var_data_to_dataframe(self,var_data):
         """
         Convert a single variable's data from a json response to a pandas DataFrame.
+
         :param var_data: Pulled from a subset of the sensorData section
             of a json response.
         :return: A pandas DataFrame.
@@ -311,7 +360,6 @@ class ONCToolbox(ONC):
             else:
                 query_url = json_response_data['queryUrl']
             raise UserWarning(f"No data found for request: {query_url}")
-            return None
 
         dfs, var_metadata = zip(*[self.json_var_data_to_dataframe(vd)
                                   for vd in sensor_data])
