@@ -161,7 +161,6 @@ cython_debug/
 
 # Custom
 uv.lock
-scratch.ipynb
 examples/**/onc_data/
 
 
@@ -170,3 +169,4 @@ review/scratch/
 review/hocr/
 review/downloaders/
 review/
+__scratch/
