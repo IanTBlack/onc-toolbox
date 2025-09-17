@@ -1,6 +1,8 @@
+import numpy as np
 import xarray as xr
 
 FLAG_DTYPE = 'int8'
+
 
 class FLAG:
     NOT_EVALUATED: int = 0
@@ -45,60 +47,62 @@ def flat_line_test(data: xr.DataArray,
     return flag
 
 
+def location_test(latitude: xr.DataArray, longitude: xr.DataArray,
+                  latitude_min: float | None = None,
+                  latitude_max: float | None = None,
+                  longitude_min: float | None = None,
+                  longitude_max: float | None = None) -> xr.DataArray:
+
+    # Assign NOT_EVALUATED by default.
+    flag = xr.full_like(latitude, fill_value=FLAG.NOT_EVALUATED).astype(FLAG_DTYPE)
+
+    # Flag data as okay if it is within the confines of reality.
+    flag = flag.where((np.abs(latitude) > 90) & (np.abs(longitude) > 180), FLAG.OK)
+
+    # Apply optional user defined bounds and flag as probably bad if outside those bounds.
+    if latitude_min is not None:
+        flag = flag.where(latitude < latitude_min, FLAG.PROBABLY_BAD)
+    if latitude_max is not None:
+        flag = flag.where(latitude > latitude_max, FLAG.PROBABLY_BAD)
+    if longitude_min is not None:
+        flag = flag.where(longitude < longitude_min, FLAG.PROBABLY_BAD)
+    if longitude_max is not None:
+        flag = flag.where(longitude > longitude_max, FLAG.PROBABLY_BAD)
+
+    # Flag bad data if it is outside the confines of reality.
+    flag = flag.where((np.abs(latitude) < 90) | (np.abs(longitude) < 180), FLAG.BAD)
+
+    # Set to nan if missing.
+    flag = flag.where(~np.isnan(latitude) | ~np.isnan(longitude), FLAG.MISSING_DATA)
+    return flag
 
 
 
-# def location_test(latitude: xr.DataArray, longitude: xr.DataArray,
-#                   latitude_min: float | None = None,
-#                   latitude_max: float | None = None,
-#                   longitude_min: float | None = None,
-#                   longitude_max: float | None = None) -> xr.DataArray:
-# 
-#     # Assign NOT_EVALUATED by default.
-#     flag = xr.full_like(latitude, fill_value=FLAG.NOT_EVALUATED).astype(FLAG_DTYPE)
-# 
-#     # Flag data as okay if it is within the confines of reality.
-#     flag = flag.where((np.abs(latitude) > 90) & (np.abs(longitude) > 180), FLAG.OK)
-# 
-#     # Apply optional user defined bounds and flag as probably bad if outside those bounds.
-#     if latitude_min is not None:
-#         flag = flag.where(latitude < latitude_min, FLAG.PROBABLY_BAD)
-#     if latitude_max is not None:
-#         flag = flag.where(latitude > latitude_max, FLAG.PROBABLY_BAD)
-#     if longitude_min is not None:
-#         flag = flag.where(longitude < longitude_min, FLAG.PROBABLY_BAD)
-#     if longitude_max is not None:
-#         flag = flag.where(longitude > longitude_max, FLAG.PROBABLY_BAD)
-# 
-#     # Flag bad data if it is outside the confines of reality.
-#     flag = flag.where((np.abs(latitude) < 90) | (np.abs(longitude) < 180), FLAG.BAD)
-# 
-#     # Set to nan if missing.
-#     flag = flag.where(~np.isnan(latitude) | ~np.isnan(longitude), FLAG.MISSING_DATA)
-#     return flag
-# 
-# 
-# 
-# def gross_range_test(data: xr.DataArray,
-#                      sensor_min: float, sensor_max: float,
-#                      operator_min: float or None = None,
-#                      operator_max: float or None = None) -> xr.DataArray:
-# 
-#     flag = xr.full_like(data, fill_value=FLAG.NOT_EVALUATED).astype('int8')
-# 
-#     flag = flag.where((data < sensor_min) & (data > sensor_max), FLAG.OK)
-#     flag = flag.where((data > sensor_min) | (data < sensor_max), FLAG.BAD)
-# 
-#     if operator_min is not None:
-#         if sensor_min != operator_min:
-#              flag = flag.where((data > operator_min) | (data < sensor_min), FLAG.PROBABLY_BAD)
-#     if operator_max is not None:
-#         if sensor_max != operator_max:
-#             flag = flag.where((data < operator_max) | (data > sensor_max), FLAG.PROBABLY_BAD)
-# 
-#     flag = flag.where(~np.isnan(data), FLAG.MISSING_DATA)
-# 
-#     return flag
+def gross_range_test(data: xr.DataArray,
+                     sensor_min: float, sensor_max: float,
+                     operator_min: float or None = None,
+                     operator_max: float or None = None) -> xr.DataArray:
+
+    flag = xr.full_like(data, fill_value=FLAG.NOT_EVALUATED).astype(FLAG_DTYPE)
+
+    flag = flag.where((data < sensor_min) & (data > sensor_max), FLAG.OK)
+    flag = flag.where((data > sensor_min) | (data < sensor_max), FLAG.BAD)
+
+    if operator_min is not None:
+        if sensor_min != operator_min:
+             flag = flag.where((data > operator_min) | (data < sensor_min),
+                               FLAG.PROBABLY_BAD)
+    if operator_max is not None:
+        if sensor_max != operator_max:
+            flag = flag.where((data < operator_max) | (data > sensor_max),
+                              FLAG.PROBABLY_BAD)
+
+    flag = flag.where(~np.isnan(data), FLAG.MISSING_DATA)
+
+    return flag
+
+
+
 # 
 # 
 # def spike_test(data: xr.DataArray, spike_half_window: int = 1, std_half_window: int = 15,
