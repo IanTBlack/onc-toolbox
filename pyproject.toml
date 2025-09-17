@@ -5,6 +5,8 @@ description = "A toolbox for exploring Ocean Networks Canada data for the advent
 authors = [
     {name = "Ian Black", email = "iantimothyblack@gmail.com"},
 ]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 keywords = ['ONC']
 readme = "README.md"
 dependencies = [
